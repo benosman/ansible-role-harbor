@@ -32,10 +32,10 @@ services:
       - SETGID
       - SETUID
     volumes:
-      - /data/registry:/storage:z
+      - "{{ harbor_data_volume }}/registry:/storage:z"
       - ./common/config/registry/:/etc/registry/:z
       - type: bind
-        source: /data/secret/registry/root.crt
+        source: "{{ harbor_data_volume }}/secret/registry/root.crt"
         target: /etc/registry/root.crt
     networks:
       - harbor
@@ -61,7 +61,7 @@ services:
       - SETGID
       - SETUID
     volumes:
-      - /data/registry:/storage:z
+      - "{{ harbor_data_volume }}/registry:/storage:z"
       - ./common/config/registry/:/etc/registry/:z
       - type: bind
         source: ./common/config/registryctl/config.yml
@@ -89,7 +89,7 @@ services:
       - SETGID
       - SETUID
     volumes:
-      - /data/database:/var/lib/postgresql/data:z
+      - "{{ harbor_data_volume }}/database:/var/lib/postgresql/data:z"
     networks:
       harbor:
     dns_search: .
@@ -115,18 +115,18 @@ services:
       - SETGID
       - SETUID
     volumes:
-      - /data/ca_download/:/etc/core/ca/:z
-      - /data/psc/:/etc/core/token/:z
-      - /data/:/data/:z
+      - "{{ harbor_data_volume }}/ca_download/:/etc/core/ca/:z"
+      - "{{ harbor_data_volume }}/psc/:/etc/core/token/:z"
+      - "{{ harbor_data_volume }}:/data/:z"
       - ./common/config/core/certificates/:/etc/core/certificates/:z
       - type: bind
         source: ./common/config/core/app.conf
         target: /etc/core/app.conf
       - type: bind
-        source: /data/secret/core/private_key.pem
+        source: "{{ harbor_data_volume }}/secret/core/private_key.pem"
         target: /etc/core/private_key.pem
       - type: bind
-        source: /data/secret/keys/secretkey
+        source: "{{ harbor_data_volume }}/secret/keys/secretkey"
         target: /etc/core/key
     networks:
       harbor:
@@ -176,7 +176,7 @@ services:
       - SETGID
       - SETUID
     volumes:
-      - /data/job_logs:/var/log/jobs:z
+      - "{{ harbor_data_volume }}/job_logs:/var/log/jobs:z"
       - type: bind
         source: ./common/config/jobservice/config.yml
         target: /etc/jobservice/config.yml
@@ -202,7 +202,7 @@ services:
       - SETGID
       - SETUID
     volumes:
-      - /data/redis:/var/lib/redis
+      - "{{ harbor_data_volume }}/redis:/var/lib/redis"
     networks:
       harbor:
     dns_search: .

@@ -8,7 +8,7 @@ After = docker.service
 [Service]
 WorkingDirectory = {{ harbor_install_dir }}/harbor
 
-Environment=PATH=/usr/local/bin:{{ ansible_env.PATH }}
+Environment=PATH=/usr/local/bin:{{ (ansible_env|default({})).PATH|default('') }}
 
 ExecStart = /usr/local/bin/docker-compose up
 ExecStop = /usr/local/bin/docker-compose down

@@ -12,8 +12,11 @@
       - '!any'
       - facter
 
-- include_tasks: install.yml
-- include_tasks: configure.yml
+- name: install
+  include_tasks: install.yml
+
+- name: configure
+  include_tasks: configure.yml
 
 # Restart only if we changed the registry realm
 - include_tasks: restart.yaml
