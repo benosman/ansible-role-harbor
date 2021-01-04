@@ -1,6 +1,7 @@
 ---
 
 - name: "Setting permissions on Harbor common folder......"
+  become: true
   file:
     dest: "{{ harbor_install_dir }}/harbor/common"
     #owner: 10000
@@ -11,6 +12,7 @@
     - not harbor_folder_st.stat.exists or (harbor_folder_st.stat.isdir is defined and not harbor_folder_st.stat.isdir)
 
 - name: "Setting permissions on nginx folder specifically..."
+  become: true
   file:
     dest: "{{ harbor_install_dir }}/harbor/common/config/nginx"
     owner: 10000
@@ -21,6 +23,7 @@
     - not harbor_folder_st.stat.exists or (harbor_folder_st.stat.isdir is defined and not harbor_folder_st.stat.isdir)
 
 - name: Changing registry realm if harbor_registry_realm_protocol is different from harbor_ui_url_protocol
+  become: true
   replace:
     path: "{{ harbor_install_dir }}/harbor/common/config/registry/config.yml"
     regexp: 'realm: (https|http)://(.*)'

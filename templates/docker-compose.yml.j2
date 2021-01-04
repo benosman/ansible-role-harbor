@@ -14,10 +14,10 @@ services:
       - SETGID
       - SETUID
     volumes:
-      - /var/log/harbor/:/var/log/docker/:z
-      - ./common/config/log/:/etc/logrotate.d/:z
+      - "{{ harbor_data_volume }}/logs/containers/:/var/log/docker/:z"
+      - "{{ harbor_folder_st.stat.path }}/log/:/etc/logrotate.d/:z"
     ports:
-      - 127.0.0.1:1514:10514
+      - 1514:10514
     networks:
       - harbor
 
@@ -33,7 +33,7 @@ services:
       - SETUID
     volumes:
       - "{{ harbor_data_volume }}/registry:/storage:z"
-      - ./common/config/registry/:/etc/registry/:z
+      - "{{ harbor_folder_st.stat.path }}/registry/:/etc/registry/:z"
       - type: bind
         source: "{{ harbor_data_volume }}/secret/registry/root.crt"
         target: /etc/registry/root.crt
@@ -52,7 +52,7 @@ services:
     image: goharbor/harbor-registryctl:v{{ harbor_version }}
     container_name: registryctl
     env_file:
-      - ./common/config/registryctl/env
+      - "{{ harbor_folder_st.stat.path }}/registryctl/env"
     restart: always
     cap_drop:
       - ALL
@@ -62,9 +62,9 @@ services:
       - SETUID
     volumes:
       - "{{ harbor_data_volume }}/registry:/storage:z"
-      - ./common/config/registry/:/etc/registry/:z
+      - "{{ harbor_folder_st.stat.path }}/registry/:/etc/registry/:z"
       - type: bind
-        source: ./common/config/registryctl/config.yml
+        source: "{{ harbor_folder_st.stat.path }}/registryctl/config.yml"
         target: /etc/registryctl/config.yml
     networks:
       - harbor
@@ -94,7 +94,7 @@ services:
       harbor:
     dns_search: .
     env_file:
-      - ./common/config/db/env
+      - "{{ harbor_folder_st.stat.path }}/db/env"
     depends_on:
       - log
     logging:
@@ -107,7 +107,7 @@ services:
     image: goharbor/harbor-core:v{{ harbor_version }}
     container_name: harbor-core
     env_file:
-      - ./common/config/core/env
+      - "{{ harbor_folder_st.stat.path }}/core/env"
     restart: always
     cap_drop:
       - ALL
@@ -118,9 +118,9 @@ services:
       - "{{ harbor_data_volume }}/ca_download/:/etc/core/ca/:z"
       - "{{ harbor_data_volume }}/psc/:/etc/core/token/:z"
       - "{{ harbor_data_volume }}:/data/:z"
-      - ./common/config/core/certificates/:/etc/core/certificates/:z
+      - "{{ harbor_folder_st.stat.path }}/core/certificates/:/etc/core/certificates/:z"
       - type: bind
-        source: ./common/config/core/app.conf
+        source: "{{ harbor_folder_st.stat.path }}/core/app.conf"
         target: /etc/core/app.conf
       - type: bind
         source: "{{ harbor_data_volume }}/secret/core/private_key.pem"
@@ -167,7 +167,7 @@ services:
     image: goharbor/harbor-jobservice:v{{ harbor_version }}
     container_name: harbor-jobservice
     env_file:
-      - ./common/config/jobservice/env
+      - "{{ harbor_folder_st.stat.path }}/jobservice/env"
     restart: always
     cap_drop:
       - ALL
@@ -176,9 +176,9 @@ services:
       - SETGID
       - SETUID
     volumes:
-      - "{{ harbor_data_volume }}/job_logs:/var/log/jobs:z"
+      - "{{ harbor_data_volume }}/logs/jobs:/var/log/jobs:z"
       - type: bind
-        source: ./common/config/jobservice/config.yml
+        source: "{{ harbor_folder_st.stat.path }}/jobservice/config.yml"
         target: /etc/jobservice/config.yml
     networks:
       - harbor
@@ -226,7 +226,7 @@ services:
       - SETUID
       - NET_BIND_SERVICE
     volumes:
-      - ./common/config/nginx:/etc/nginx:z
+      - "{{ harbor_folder_st.stat.path }}/nginx:/etc/nginx:z"
     networks:
       - harbor
     dns_search: .

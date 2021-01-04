@@ -12,20 +12,18 @@
       - '!any'
       - facter
 
-- name: install
-  include_tasks: install.yml
-
-- name: configure
-  include_tasks: configure.yml
+- include_tasks: install.yml
+- include_tasks: configure.yml
 
 # Restart only if we changed the registry realm
 - include_tasks: restart.yaml
-  when: harbor_behind_proxy is defined and harbor_behind_proxy and harbor_registry_realm_protocol != harbor_ui_url_protocol
+  #when: harbor_behind_proxy is defined and harbor_behind_proxy and harbor_registry_realm_protocol != harbor_ui_url_protocol
 
 - include_tasks: create_users.yml
 - include_tasks: create_projects.yml
 
 - name: remove install package
+  become: true
   file:
     path: "{{ item }}"
     state: absent
@@ -33,4 +31,4 @@
     - /tmp/harbor.tgz
     - "{{ harbor_install_dir }}/harbor/harbor.v{{ harbor_version }}.tar.gz"
 
-- include_tasks: service.yml
+- include_tasks: start.yml

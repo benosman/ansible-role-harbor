@@ -67,7 +67,7 @@
     src: /tmp/harbor.tgz
     dest: "{{ harbor_install_dir }}"
     mode: 0750
-    creates: "{{ harbor_install_dir }}/harbor"
+    #creates: "{{ harbor_install_dir }}/harbor"
   when:
     - not harbor_folder_st.stat.exists | bool # or (harbor_folder_st.stat.isdir is defined and not harbor_folder_st.stat.isdir)
 
@@ -99,37 +99,23 @@
     - not harbor_folder_st.stat.exists or (harbor_folder_st.stat.isdir is defined and not harbor_folder_st.stat.isdir)
 
 # pre-configure
-
 - name: Copying over harbor.yml
   become: true
   template:
     src: harbor.yml.j2
     dest: "{{ harbor_install_dir }}/harbor/harbor.yml"
     mode: 0640
-  when:
-    - not harbor_folder_st.stat.exists or (harbor_folder_st.stat.isdir is defined and not harbor_folder_st.stat.isdir)
+  # when:
+  #   - not harbor_folder_st.stat.exists or (harbor_folder_st.stat.isdir is defined and not harbor_folder_st.stat.isdir)
 
-# - name: Copying over docker-compose.yml
-#   template:
-#     src: docker-compose.yml.j2
-#     dest: "{{ harbor_install_dir }}/harbor/docker-compose.yml"
-#     mode: 0640
-#   when:
-#     - not harbor_folder_st.stat.exists or (harbor_folder_st.stat.isdir is defined and not harbor_folder_st.stat.isdir)
-
-- name: ensure that prepare script are executable
-  become: true
-  file:
-    name: "{{ harbor_install_dir }}/harbor/prepare"
-    mode: 0750
 # - name: Copying over prepare script
+#   become: true
 #   template:
 #     src: prepare.j2
 #     dest: "{{ harbor_install_dir }}/harbor/prepare"
 #     mode: 0750
-#     # mode: a+x
-  when:
-    - not harbor_folder_st.stat.exists or (harbor_folder_st.stat.isdir is defined and not harbor_folder_st.stat.isdir)
+#   when:
+#     - not harbor_folder_st.stat.exists or (harbor_folder_st.stat.isdir is defined and not harbor_folder_st.stat.isdir)
 
 - name: Running Harbor installer in {{ harbor_install_dir }}/harbor ...
   become: true
@@ -148,45 +134,21 @@
 - name: Commenting required line on Nginx configuration if harbor_behind_proxy is set
   become: true
   replace:
-    path: "{{ harbor_install_dir }}/harbor/common/templates/nginx/{{ item }}"
+    path: "{{ harbor_install_dir }}/harbor/common/config/nginx/{{ item }}"
     regexp: '(proxy_set_header X-Forwarded-Proto \$\$scheme;)'
     replace: '# \1'
     backup: true
   when: harbor_behind_proxy is defined and harbor_behind_proxy
   with_items:
-    - "nginx.http.conf"
-    - "nginx.https.conf"
+    - "nginx.conf"
+    # - "nginx.http.conf"
+    # - "nginx.https.conf"
 
-- name: collect facts about system services
-  service_facts:
-  register: services_state
-
-- name: Debug
-  debug:
-    var: services_state.services.harbor
-
-- name: wait 15 seconds for clean startup
-  pause:
-    seconds: 15
-
-- name: wait for health
-  uri:
-    url: "http://127.0.0.1/api/version"
-    method: GET
-#    user: "admin"
-#    password: "{{ harbor_admin_password | default('Harbor12345') }}"
-    status_code:
-      - 200
-    headers:
-      Content-Type: application/json
-    body_format: json
-    #force_basic_auth: true
-    return_content: true
-  register: _harbor_version
-  until: _harbor_version is succeeded
-  ignore_errors: false
-  retries: 10
-  delay: 10
-
-- debug:
-    msg: "{{ harbor_version }}"
+# - name: Copying over docker-compose.yml
+#   become: true
+#   template:
+#     src: docker-compose.yml.j2
+#     dest: "{{ harbor_install_dir }}/harbor/docker-compose.yml"
+#     mode: 0640
+#   # when:
+#   #   - not harbor_folder_st.stat.exists or (harbor_folder_st.stat.isdir is defined and not harbor_folder_st.stat.isdir)

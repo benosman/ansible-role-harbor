@@ -1,7 +1,0 @@
----
-
-- name: ensure harbor is started and enabled
-  service:
-    name: harbor
-    state: started
-    enabled: true
