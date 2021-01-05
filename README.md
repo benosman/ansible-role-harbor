@@ -131,7 +131,7 @@ harbor_ui_url_protocol: "http"
 harbor_customize_crt: "off"
 harbor_registry_realm_protocol: "https"
 # Running Harbor's nginx in different ports not to conflict with 80/443
-harbor_exposed_http_port: 8798
+harbor_exposed_http_port: 80
 harbor_exposed_https_port: 8799
 harbor_extras:
   - clair
