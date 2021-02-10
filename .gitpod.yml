@@ -1,4 +1,3 @@
-
 tasks:
   - command: |
       git config --global user.name $GITHUB_PUBLIC_NAME
@@ -6,6 +5,6 @@ tasks:
 
 vscode:
   extensions:
-    - vscoss.vscode-ansible@0.5.2:m6JJstDsTNOF8KJcya19UA==
     - samuelcolvin.jinjahtml@0.16.0:BVmmMq9AdPxbGoooHnjjUg==
-    - wholroyd.jinja@0.0.8:C3zsj1nZxSJZh/EcV6Hjlg==git
+    - wholroyd.jinja@0.0.8:C3zsj1nZxSJZh/EcV6Hjlg==
+    - esbenp.prettier-vscode@5.9.1:iOd2sieSR48o6zF3hElemQ==

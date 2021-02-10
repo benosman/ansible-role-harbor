@@ -21,5 +21,3 @@
     SHELL: /bin/bash
     PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
     TERM: xterm
-  when:
-    - not harbor_folder_st.stat.exists or (harbor_folder_st.stat.isdir is defined and not harbor_folder_st.stat.isdir)
