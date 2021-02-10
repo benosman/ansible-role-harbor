@@ -1,19 +1,8 @@
 ---
-- name: start harbor
-  service:
-    name: harbor
-    state: started
-
-
-- name: stop harbor
-  service:
-    name: harbor
-    state: stopped
-
 - name: run installer
   become: true
   command: |
-    /bin/bash ./install.sh {{ harbor_installer_with | default([]) | join(' ') }} {{ harbor_installer_extra_args }}
+    /bin/bash ./install.sh {{ harbor_installer_with | default([]) | join(' ') }}
   args:
     chdir: "{{ harbor_install_dir }}/harbor"
     creates: '{{ harbor_install_dir }}/harbor/harbor_install_log.txt'
@@ -21,3 +10,8 @@
     SHELL: /bin/bash
     PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
     TERM: xterm
+
+- name: reload service
+  service:
+    name: harbor
+    state: reloaded

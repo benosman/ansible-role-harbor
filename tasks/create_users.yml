@@ -1,19 +1,18 @@
 ---
-
-- name: "check password length"
+- name: 'check password length for users'
   assert:
     that:
-      - item.password | default("HarborUser12345") | length > 8
+      - item.password | length > 8
     quiet: true
-    success_msg: "Password length is greater 8"
+    success_msg: 'Password length is greater 8'
   with_items: "{{ harbor_users | default(omit) }}"
 
-- name: "Creating users ... '{{ harbor_api_url }}/users'"
+- name: 'creating users ... "{{ harbor_api_url }}"/users'
   uri:
     url: "{{ harbor_api_url }}/users"
     method: POST
-    user: "admin"
-    password: "{{ harbor_admin_password | default('Harbor12345') }}"
+    user: "{{ harbor_admin }}"
+    password: "{{ harbor_admin_password }}"
     status_code:
       - 201
       - 409 # already created

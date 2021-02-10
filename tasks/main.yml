@@ -1,9 +1,95 @@
 ---
 
-- name: Checking if Harbor is already installed
+- name: 'check if Harbor is already installed'
   stat:
-    path: "{{ harbor_install_dir }}/harbor/common/config"
-  register: harbor_folder_st
+    path: "{{ harbor_install_dir }}/harbor"
+  register: harbor_install_st
+
+- block:
+  - name: install dependencies
+    become: true
+    package:
+      name: "{{ harbor_packages }}"
+      state: present
+
+  - name: "creating Harbor directory... ({{ harbor_install_dir }}/harbor)"
+    become: true
+    file:
+      path: "{{ harbor_install_dir }}"
+      state: directory
+      mode: 0755
+  
+  - name: "uncompressing Harbor installer..."
+    become: true
+    unarchive:
+      src: "{{ harbor_url }}"
+      dest: "{{ harbor_install_dir }}"
+      mode: 0750
+  when:
+    - not harbor_install_st.stat.exists
+
+- name: 'configure Harbor service'
+  become: true
+  template:
+    src: harbor.yml.j2
+    dest: "{{ harbor_install_dir }}/harbor/harbor.yml"
+    mode: 0640
+  notify: run installer
+
+- name: 'create systemd service unit'
+  become: true
+  template:
+    src: "harbor.service.j2"
+    dest: "{{ systemd_lib_directory }}/harbor.service"
+    owner: root
+    group: root
+    mode: 0644
+  notify: reload service
+
+- name: 'enable systemd service unit'
+  service:
+    name: harbor
+    enabled: yes
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 - name: do facts module to get latest information
   setup:

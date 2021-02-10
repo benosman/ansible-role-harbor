@@ -6,5 +6,3 @@ tasks:
 vscode:
   extensions:
     - samuelcolvin.jinjahtml@0.16.0:BVmmMq9AdPxbGoooHnjjUg==
-    - wholroyd.jinja@0.0.8:C3zsj1nZxSJZh/EcV6Hjlg==
-    - esbenp.prettier-vscode@5.9.1:iOd2sieSR48o6zF3hElemQ==

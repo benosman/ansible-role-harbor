@@ -1,87 +1,131 @@
 ---
-
-harbor_release: 2.1.0
-harbor_version: 2.1.0
-http_server: "https://github.com/goharbor/harbor/releases/download/v{{ harbor_version }}"
-
-#harbor_release: 1.8.0
-#harbor_version: 1.8.1
-harbor_url: "{{ http_server }}/harbor-offline-installer-v{{ harbor_version }}.tgz"
-
-
-harbor_installer_extra_args:
-#harbor_extras:
-#        #- clair
-#        #- notary
-
-# Will create harbor folder inside
 harbor_install_dir: /opt
-# This is related to the internal Nginx. If you are running it behind a proxy that terminates
-# SSL, leave this on http. You will want to set `harbor_registry_realm_protocol` to "https", though.
-harbor_ui_url_protocol: "http"
-harbor_max_job_workers: 10
-harbor_port: 80
 
-# set to yes if you are running harbor behind an Nginx proxy
-# or elastic load balancing. This will remove the line
-# proxy_set_header X-Forwarded-Proto $scheme;
-# from Harbor's nginx configuration according to the troubleshooting section.
-# https://github.com/goharbor/harbor/blob/master/docs/installation_guide.md#troubleshooting
-# REMEMBER to put this line on YOUR proxy configuration, though.
-harbor_behind_proxy: false
+harbor_release: 2.1.3
+harbor_version: 2.1.3
+harbor_url: "https://github.com/goharbor/harbor/releases/download/v{{ harbor_version }}/harbor-online-installer-v{{ harbor_version }}.tgz"
 
-# If you are running behind a proxy and the proxy terminates SSL, you need to set this to "https"
-# as this dictates the *external* access to the registry.
-# This only takes effect if "harbor_behind_proxy" is True.
-harbor_registry_realm_protocol: "http"
+harbor_installer_with:
+  - '--with-clair'
+  - '--with-trivy'
+  - '--with-chartmuseum'
 
-# Used in the docker compose file
+
+harbor_hostname:
 harbor_exposed_http_port: 80
-harbor_exposed_https_port: 443
-harbor_install: true
-harbor_self_registration: "on"
 
-# change these if you have your own redis running already
-harbor_redis_host: redis
+harbor_admin_password:
+harbor_data_volume: /data
 
-# If you have Harbor running on say "myregistry.company.com", that's what you should have as harbor_hostname
-harbor_hostname: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
-harbor_datadir: "/data"
-harbor_ssl_self_days: 180
-harbor_ssl_self_subject: "/O=Harbor Server/OU=Self signed/CN=test"
-harbor_api_port: "{% if harbor_ui_url_protocol == 'http' %}{{harbor_exposed_http_port}}{% else %}{{harbor_exposed_https_port}}{% endif %}"
-# If you are running Harbor behind your own proxy, override this as it might not match with Harbor.cfg values.
-harbor_api_url: "{{ harbor_ui_url_protocol }}://{{ harbor_hostname }}:{{ harbor_api_port }}/api/v2.0"
+# The interval of clair updaters, the unit is hour, set to 0 to disable the updaters.
+harbor_clair_updaters_interval: 12
 
-harbor_ssl_cert: "{{ harbor_install_dir }}/harbor/ssl/harbor.crt"
-harbor_ssl_cert_key: "{{ harbor_install_dir }}/harbor/ssl/harbor.key"
+# ignoreUnfixed The flag to display only fixed vulnerabilities
+harbor_trivy_ignore_unfixed: false
 
-harbor_projects: []
+# skipUpdate The flag to enable or disable Trivy DB downloads from GitHub
+harbor_trivy_skip_update: false
 
-# Example to create project on install
-# harbor_projects:
-#   - project_name: test
-#     is_public: "false"
-#     content_trust: "false"
-#     prevent_vul: "true"
-#     severity: "high"
-#     auto_scan: "true"
+# insecure The flag to skip verifying registry certificate
+harbor_trivy_insecure: false
 
-harbor_users: []
+# github_token The GitHub access token to download Trivy DB
+harbor_trivy_github_token:
 
-#  - username: foo
-#    password: bar12345
-#    email: foo@test.lan
-#    realname: automatic build
-#    role_name: developer
-#    has_admin_role: false
+# Maximum number of job workers in job service
+harbor_jobservice_max_job_workers: 10
+
+# Maximum retry count for webhook job
+harbor_notification_webhook_job_max_retry: 10
+
+# Change the value of absolute_url to enabled can enable absolute url in chart
+harbor_chart_absolute_url: disabled
+
+harbor_log_level: info
+harbor_log_local_rotate_count: 50
+harbor_log_local_rotate_size: 200M
+harbor_log_local_location: "{{ harbor_data_volume }}/logs"
+
+harbor_external_database:
+  harbor:
+    host: "{{ harbor_postgresql_host }}"
+    port: "{{ harbor_postgresql_port }}"
+    db_name: "{{ harbor_external_database_harbor_db_name }}"
+    username:  "{{ harbor_external_database_harbor_db_username }}"
+    password: "{{ harbor_external_database_harbor_db_password }}"
+    ssl_mode: disable
+    max_idle_conns: 2
+    max_open_conns: 0
+  clair:
+    host: "{{ harbor_postgresql_host }}"
+    port: "{{ harbor_postgresql_port }}"
+    db_name: "{{ harbor_external_database_clair_db_name }}"
+    username:  "{{ harbor_external_database_clair_db_username }}"
+    password: "{{ harbor_external_database_clair_db_password }}"
+    ssl_mode: disable
+
+harbor_external_redis:
+  host: "{{ harbor_redis_host }}"
+  port: "{{ harbor_redis_port }}"
+  password: "{{ harbor_redis_password }}"
+  # db_index 0 is for core, it's unchangeable
+  registry_db_index: 1
+  jobservice_db_index: 2
+  chartmuseum_db_index: 3
+  clair_db_index: 4
+  trivy_db_index: 5
+  idle_timeout_seconds: 30
 
 
-harbor_installer_with: []
-#  --with-notary if needs enable Notary in Harbor
-#  --with-clair if needs enable Clair in Harbor
-#  --with-trivy if needs enable Trivy in Harbor
-#  --with-chartmuseum if needs enable Chartmuseum in Harbor
-
-harbor_extra_compose_files:
-harbor_docker_compose_files:
+#is is related to the internal Nginx. If you are running it behind a proxy that terminates
+## SSL, leave this on http. You will want to set `harbor_registry_realm_protocol` to "https", though.
+#harbor_ui_url_protocol: "http"
+#harbor_max_job_workers: 10
+#harbor_port: 80
+#
+## set to yes if you are running harbor behind an Nginx proxy
+## or elastic load balancing. This will remove the line
+## proxy_set_header X-Forwarded-Proto $scheme;
+## from Harbor's nginx configuration according to the troubleshooting section.
+## https://github.com/goharbor/harbor/blob/master/docs/installation_guide.md#troubleshooting
+## REMEMBER to put this line on YOUR proxy configuration, though.
+#harbor_behind_proxy: false
+#
+## If you are running behind a proxy and the proxy terminates SSL, you need to set this to "https"
+## as this dictates the *external* access to the registry.
+## This only takes effect if "harbor_behind_proxy" is True.
+#harbor_registry_realm_protocol: "http"
+#
+## Used in the docker compose file
+#harbor_exposed_https_port: 443
+#harbor_install: true
+#harbor_self_registration: "on"
+#
+## change these if you have your own redis running already
+#harbor_redis_host: redis
+#
+## If you have Harbor running on say "myregistry.company.com", that's what you should have as harbor_hostname
+#harbor_datadir: "/data"
+#harbor_api_port: "{% if harbor_ui_url_protocol == 'http' %}{{harbor_exposed_http_port}}{% else %}{{harbor_exposed_https_port}}{% endif %}"
+## If you are running Harbor behind your own proxy, override this as it might not match with Harbor.cfg values.
+#harbor_api_url: "{{ harbor_ui_url_protocol }}://{{ harbor_hostname }}:{{ harbor_api_port }}/api/v2.0"
+#
+#harbor_projects: []
+## Example to create project on install
+##   - project_name: test
+##     is_public: "false"
+##     content_trust: "false"
+##     prevent_vul: "true"
+##     severity: "high"
+##     auto_scan: "true"
+#
+#harbor_users: []
+##  - username: foo
+##    password: bar12345
+##    email: foo@test.lan
+##    realname: automatic build
+##    role_name: developer
+##    has_admin_role: false
+#
+#
+#
