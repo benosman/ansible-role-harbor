@@ -4,14 +4,14 @@ harbor_install_dir: /opt
 harbor_release: 2.1.3
 harbor_version: 2.1.3
 harbor_url: "https://github.com/goharbor/harbor/releases/download/v{{ harbor_version }}/harbor-online-installer-v{{ harbor_version }}.tgz"
+harbor_url: "https://github.com/goharbor/harbor/releases/download/v2.1.3/harbor-online-installer-v2.1.3.tgz"
+harbor_installer_with: []
+#  - '--with-clair'
+#  - '--with-trivy'
+#  - '--with-chartmuseum'
 
-harbor_installer_with:
-  - '--with-clair'
-  - '--with-trivy'
-  - '--with-chartmuseum'
 
-
-harbor_hostname:
+harbor_hostname: "{{ harbor_fqdn }}"
 harbor_exposed_http_port: 80
 
 harbor_admin_password:

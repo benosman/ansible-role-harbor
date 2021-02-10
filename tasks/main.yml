@@ -22,6 +22,7 @@
   - name: "uncompressing Harbor installer..."
     become: true
     unarchive:
+      remote_src: yes
       src: "{{ harbor_url }}"
       dest: "{{ harbor_install_dir }}"
       mode: 0750
