@@ -171,8 +171,7 @@ external_database:
 
 # Uncomment external_redis if using external Redis server
 external_redis:
-  host: {{ harbor_external_redis.host }}
-  port: {{ harbor_external_redis.port }}
+  host: {{ harbor_external_redis.host }}:{{ harbor_external_redis.port }}
   password: {{ harbor_external_redis.password }}
   # db_index 0 is for core, it's unchangeable
   registry_db_index: {{ harbor_external_redis.registry_db_index }}
