@@ -9,13 +9,15 @@ http:
   # port for http, default is 80. If https enabled, this port will redirect to https port
   port: {{ harbor_exposed_http_port }}
 
+{% if harbor_https_enabled | bool -%}
 # https related config
-# https:
-#   # https port for harbor, default is 443
-#   port: 443
-#   # The path of cert and key files for nginx
-#   certificate: /your/certificate/path
-#   private_key: /your/private/key/path
+https:
+  # https port for harbor, default is 443
+  port: {{ harbor_https_port }}
+  # The path of cert and key files for nginx
+  certificate: {{ harbor_https_certificate }}
+  private_key: {{ harbor_https_private_key }}
+{%- endif %}
 
 # # Uncomment following will enable tls communication between all harbor components
 # internal_tls:
@@ -24,9 +26,11 @@ http:
 #   # put your cert and key files on dir
 #   dir: /etc/harbor/tls/internal
 
+{% if harbor_external_url -%}
 # Uncomment external_url if you want to enable external proxy
 # And when it enabled the hostname will no longer used
-external_url: https://{{ harbor_hostname }}
+external_url: https://{{ harbor_external_url }}
+{%- endif %}
 
 # The initial password of Harbor admin
 # It only works in first time to install harbor
@@ -36,12 +40,12 @@ harbor_admin_password: {{ harbor_admin_password }}
 # Harbor DB configuration
 database:
   # The password for the root user of Harbor DB. Change this before any production use.
-  password:
+  password: {{ harbor_database_password }}
   # The maximum number of connections in the idle connection pool. If it <=0, no idle connections are retained.
-  max_idle_conns:
+  max_idle_conns: {{ harbor_database_max_idle_conns }}
   # The maximum number of open connections to the database. If it <= 0, then there is no limit on the number of open connections.
   # Note: the default number of connections is 1024 for postgres of harbor.
-  max_open_conns:
+  max_open_conns: {{ harbor_database_max_open_conns }}
 
 # The default data volume
 data_volume: {{ harbor_data_volume }}
@@ -61,41 +65,39 @@ data_volume: {{ harbor_data_volume }}
 #   redirect:
 #     disabled: false
 
-# Clair configuration
-clair:
-  # The interval of clair updaters, the unit is hour, set to 0 to disable the updaters.
-  updaters_interval: {{ harbor_clair_updaters_interval }}
-
 # Trivy configuration
+#
+# Trivy DB contains vulnerability information from NVD, Red Hat, and many other upstream vulnerability databases.
+# It is downloaded by Trivy from the GitHub release page https://github.com/aquasecurity/trivy-db/releases and cached
+# in the local file system. In addition, the database contains the update timestamp so Trivy can detect whether it
+# should download a newer version from the Internet or use the cached one. Currently, the database is updated every
+# 12 hours and published as a new release to GitHub.
 trivy:
   # ignoreUnfixed The flag to display only fixed vulnerabilities
-  ignore_unfixed: {{ harbor_trivy_ignore_unfixed }}
+  ignore_unfixed: {{ harbor_trivy_ignore_unfixed | lower }}
   # skipUpdate The flag to enable or disable Trivy DB downloads from GitHub
   #
   # You might want to enable this flag in test or CI/CD environments to avoid GitHub rate limiting issues.
-  # If the flag is enabled you have to manually download the `trivy.db` file and mount it in the
-  # /home/scanner/.cache/trivy/db/trivy.db path.
-  skip_update: {{ harbor_trivy_skip_update }}
+  # If the flag is enabled you have to download the `trivy-offline.tar.gz` archive manually, extract `trivy.db` and
+  # `metadata.json` files and mount them in the `/home/scanner/.cache/trivy/db` path.
+  skip_update: {{ harbor_trivy_skip_update | lower }}
   #
   # insecure The flag to skip verifying registry certificate
-  insecure: {{ harbor_trivy_insecure }}
+  insecure: {{ harbor_trivy_insecure | lower }}
   # github_token The GitHub access token to download Trivy DB
-  #
-  # Trivy DB contains vulnerability information from NVD, Red Hat, and many other upstream vulnerability databases.
-  # It is downloaded by Trivy from the GitHub release page https://github.com/aquasecurity/trivy-db/releases and cached
-  # in the local file system (/home/scanner/.cache/trivy/db/trivy.db). In addition, the database contains the update
-  # timestamp so Trivy can detect whether it should download a newer version from the Internet or use the cached one.
-  # Currently, the database is updated every 12 hours and published as a new release to GitHub.
   #
   # Anonymous downloads from GitHub are subject to the limit of 60 requests per hour. Normally such rate limit is enough
   # for production operations. If, for any reason, it's not enough, you could increase the rate limit to 5000
   # requests per hour by specifying the GitHub access token. For more details on GitHub rate limiting please consult
   # https://developer.github.com/v3/#rate-limiting
   #
-  # You can create a GitHub token by following the instuctions in
+  # You can create a GitHub token by following the instructions in
   # https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line
   #
+  {% if harbor_trivy_github_token -%}
   github_token: {{ harbor_trivy_github_token }}
+  {%- endif %}
+  
 
 jobservice:
   # Maximum number of job workers in job service
@@ -136,8 +138,10 @@ log:
 #This attribute is for migrator to detect the version of the .cfg file, DO NOT MODIFY!
 _version: {{ harbor_release }}
 
+{% if harbor_external_database_enabled | bool -%}
 # Uncomment external_database if using external database.
 external_database:
+{%- if harbor_external_database.harbor.enabled | bool %}
   harbor:
     host: {{ harbor_external_database.harbor.host }}
     port: {{ harbor_external_database.harbor.port }}
@@ -147,28 +151,28 @@ external_database:
     ssl_mode: {{ harbor_external_database.harbor.ssl_mode }}
     max_idle_conns: {{ harbor_external_database.harbor.max_idle_conns }}
     max_open_conns: {{ harbor_external_database.harbor.max_open_conns }}
-  clair:
-    host: {{ harbor_external_database.clair.host }}
-    port: {{ harbor_external_database.clair.port }}
-    db_name: {{ harbor_external_database.clair.db_name }}
-    username: {{ harbor_external_database.clair.username }}
-    password: {{ harbor_external_database.clair.password }}
-    ssl_mode: {{ harbor_external_database.clair.ssl_mode }}
-#   notary_signer:
-#     host: notary_signer_db_host
-#     port: notary_signer_db_port
-#     db_name: notary_signer_db_name
-#     username: notary_signer_db_username
-#     password: notary_signer_db_password
-#     ssl_mode: disable
-#   notary_server:
-#     host: notary_server_db_host
-#     port: notary_server_db_port
-#     db_name: notary_server_db_name
-#     username: notary_server_db_username
-#     password: notary_server_db_password
-#     ssl_mode: disable
+{% endif -%}
+{%- if harbor_external_database.notary_signer.enabled | bool %}
+  notary_signer:
+    host: {{ harbor_external_database.notary_signer.host }}
+    port: {{ harbor_external_database.notary_signer.port }}
+    db_name: {{ harbor_external_database.notary_signer.db_name }}
+    username: {{ harbor_external_database.notary_signer.username }}
+    password: {{ harbor_external_database.notary_signer.password }}
+    ssl_mode: {{ harbor_external_database.notary_signer.ssl_mode }}
+{% endif -%}
+{%- if harbor_external_database.notary_server.enabled | bool %}
+    notary_server:
+    host: {{ harbor_external_database.notary_server.host }}
+    port: {{ harbor_external_database.notary_server.port }}
+    db_name: {{ harbor_external_database.notary_server.db_name }}
+    username: {{ harbor_external_database.notary_server.username }}
+    password: {{ harbor_external_database.notary_server.password }}
+    ssl_mode: {{ harbor_external_database.notary_server.ssl_mode }}
+{% endif -%}
+{% endif %}
 
+{%- if harbor_external_redis.enabled | bool %}
 # Uncomment external_redis if using external Redis server
 external_redis:
   host: {{ harbor_external_redis.host }}:{{ harbor_external_redis.port }}
@@ -177,9 +181,9 @@ external_redis:
   registry_db_index: {{ harbor_external_redis.registry_db_index }}
   jobservice_db_index: {{ harbor_external_redis.jobservice_db_index }}
   chartmuseum_db_index: {{ harbor_external_redis.chartmuseum_db_index }}
-  clair_db_index: {{ harbor_external_redis.clair_db_index }}
   trivy_db_index: {{ harbor_external_redis.trivy_db_index }}
   idle_timeout_seconds: {{ harbor_external_redis.idle_timeout_seconds }}
+{%- endif %}
 
 # Uncomment uaa for trusting the certificate of uaa instance that is hosted via self-signed cert.
 # uaa:
@@ -194,11 +198,17 @@ external_redis:
 # Add domain to the `no_proxy` field, when you want disable proxy
 # for some special registry.
 proxy:
-  http_proxy:
-  https_proxy:
-  no_proxy:
+  http_proxy: {{ harbor_http_proxy }}
+  https_proxy: {{ harbor_https_proxy }}
+  no_proxy: "{{ harbor_no_proxy }}"
   components:
     - core
     - jobservice
-    - clair
     - trivy
+
+{%- if harbor_metrics.enabled | bool %}
+metric:
+   enabled: true
+   port: {{  harbor_metrics.port }}
+   path: {{  harbor_metrics.path }}
+{% endif -%}

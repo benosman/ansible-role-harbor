@@ -1,20 +1,32 @@
 ---
 harbor_install_dir: /opt
 
-harbor_release: 2.1.3
-harbor_version: 2.1.3
+harbor_version: 2.2.1
+harbor_release: "{{ harbor_version }}"
+
 harbor_url: "https://github.com/goharbor/harbor/releases/download/v{{ harbor_version }}/harbor-online-installer-v{{ harbor_version }}.tgz"
-harbor_installer_with: []
-#  - '--with-clair'
+harbor_installer_with: 
+#  - '--with-notary'
 #  - '--with-trivy'
 #  - '--with-chartmuseum'
 
-
-harbor_hostname: "{{ harbor_fqdn }}"
+harbor_hostname: "{{ harbor_fqdn }}"
+harbor_external_url:
 harbor_exposed_http_port: 80
 
-harbor_admin_password:
+harbor_https_enabled: false
+harbor_https_port: 443
+harbor_https_certificate:
+harbor_https_private_key:
+
+harbor_admin_password: Harbor12345
 harbor_data_volume: /data
+
+harbor_database_password: root123
+# The maximum number of connections in the idle connection pool. If it <=0, no idle connections are retained.
+harbor_database_max_idle_conns: 50
+# The maximum number of open connections to the database. If it <= 0, then there is no limit on the number of open connections.
+harbor_database_max_open_conns: 1000
 
 # The interval of clair updaters, the unit is hour, set to 0 to disable the updaters.
 harbor_clair_updaters_interval: 12
@@ -45,36 +57,62 @@ harbor_log_local_rotate_count: 50
 harbor_log_local_rotate_size: 200M
 harbor_log_local_location: "{{ harbor_data_volume }}/logs"
 
+harbor_postgresql_host: ''
+harbor_postgresql_port: 5432
+
 harbor_external_database:
   harbor:
+    enabled: false
     host: "{{ harbor_postgresql_host }}"
     port: "{{ harbor_postgresql_port }}"
-    db_name: "{{ harbor_external_database_harbor_db_name }}"
-    username:  "{{ harbor_external_database_harbor_db_username }}"
-    password: "{{ harbor_external_database_harbor_db_password }}"
+    db_name: "{{ harbor_external_database_harbor_db_name | default('registry') }}"
+    username: "{{ harbor_external_database_harbor_db_username | default('') }}"
+    password: "{{ harbor_external_database_harbor_db_password | default('')}}"
     ssl_mode: disable
     max_idle_conns: 2
     max_open_conns: 0
-  clair:
+  notary_signer:
+    enabled: false
     host: "{{ harbor_postgresql_host }}"
     port: "{{ harbor_postgresql_port }}"
-    db_name: "{{ harbor_external_database_clair_db_name }}"
-    username:  "{{ harbor_external_database_clair_db_username }}"
-    password: "{{ harbor_external_database_clair_db_password }}"
+    db_name: "{{ harbor_external_database_notary_signer_db_name | default('notarysigner') }}"
+    username:  "{{ harbor_external_database_notary_signer_db_username | default('') }}"
+    password: "{{ harbor_external_database_notary_signer_db_password | default('') }}"
+    ssl_mode: disable
+  notary_server:
+    enabled: false
+    host: "{{ harbor_postgresql_host }}"
+    port: "{{ harbor_postgresql_port }}"
+    db_name: "{{ harbor_external_database_notary_server_db_name | default('notaryserver') }}"
+    username:  "{{ harbor_external_database_notary_server_db_username | default('') }}"
+    password: "{{ harbor_external_database_notary_server_db_password  | default('') }}"
     ssl_mode: disable
 
+harbor_external_database_enabled: "{% if harbor_external_database.harbor.enabled | bool or
+                                        harbor_external_database.notary_signer.enabled | bool or
+                                        harbor_external_database.notary_server.enabled | bool
+                                   %}true{% else %}false{% endif %}"
+    
 harbor_external_redis:
-  host: "{{ harbor_redis_host }}"
-  port: "{{ harbor_redis_port }}"
-  password: "{{ harbor_redis_password }}"
+  enabled: false
+  host: "{{ harbor_redis_host | default('') }}"
+  port: "{{ harbor_redis_port | default('')  }}"
+  password: "{{ harbor_redis_password | default(6379)  }}"
   # db_index 0 is for core, it's unchangeable
   registry_db_index: 1
   jobservice_db_index: 2
   chartmuseum_db_index: 3
-  clair_db_index: 4
   trivy_db_index: 5
   idle_timeout_seconds: 30
 
+harbor_metrics:
+  enabled: false
+  port: 9090
+  path: /metrics
+
+harbor_http_proxy: ''
+harbor_https_proxy: ''
+harbor_no_proxy: ''
 
 #is is related to the internal Nginx. If you are running it behind a proxy that terminates
 ## SSL, leave this on http. You will want to set `harbor_registry_realm_protocol` to "https", though.
